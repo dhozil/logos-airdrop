@@ -1,7 +1,11 @@
 #![no_main]
+#![no_std]
+
+extern crate alloc;
 
 risc0_zkvm::guest::entry!(main);
 
+use alloc::vec::Vec;
 use risc0_zkvm::guest::env;
 use serde::{Serialize, Deserialize};
 use sha2::{Sha256, Digest};
