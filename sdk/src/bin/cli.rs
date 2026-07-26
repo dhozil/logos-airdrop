@@ -51,6 +51,29 @@ enum Commands {
         #[arg(short, long, default_value = "distribution.json")]
         manifest: String,
     },
+
+    /// Serialize an instruction to hex-encoded Risc0-serde Vec<u32>
+    Serialize {
+        /// Type of instruction: "init", "claim", or "close"
+        #[arg(short, long)]
+        instruction: String,
+
+        /// Path to claim JSON (for "claim" instruction)
+        #[arg(short, long)]
+        claim: Option<String>,
+
+        /// Merkle root hex (for "init" instruction)
+        #[arg(short = 'r', long)]
+        merkle_root: Option<String>,
+
+        /// Distributor hex (for "init" instruction)
+        #[arg(short = 'd', long)]
+        distributor: Option<String>,
+
+        /// Total allocation (for "init" instruction)
+        #[arg(short = 'a', long)]
+        allocation: Option<u64>,
+    },
 }
 
 fn main() -> Result<()> {
@@ -72,6 +95,42 @@ fn main() -> Result<()> {
             println!("  Total Allocation: {}", manifest.config.total_allocation);
             println!("  Recipients: {}", manifest.recipients.len());
             println!("  Tree Depth: {}", manifest.tree_depth);
+        }
+        Commands::Serialize { instruction, claim, merkle_root, distributor, allocation } => {
+            let instr = match instruction.as_str() {
+                "init" => {
+                    let root = hex::decode(merkle_root.as_deref().unwrap())?;
+                    let dist = hex::decode(distributor.as_deref().unwrap())?;
+                    let mut root_arr = [0u8; 32];
+                    let mut dist_arr = [0u8; 32];
+                    root_arr.copy_from_slice(&root);
+                    dist_arr.copy_from_slice(&dist);
+                    airdrop_sdk::instructions::Instruction::Initialize {
+                        merkle_root: root_arr,
+                        distributor: dist_arr,
+                        total_allocation: allocation.unwrap(),
+                    }
+                }
+                "claim" => {
+                    let claim_json = std::fs::read_to_string(claim.as_deref().unwrap())?;
+                    let claim_data: airdrop_sdk::proof::ClaimData = serde_json::from_str(&claim_json)?;
+                    airdrop_sdk::instructions::Instruction::Claim {
+                        nullifier_secret: claim_data.nullifier_secret,
+                        merkle_path: claim_data.merkle_path,
+                        leaf_index: claim_data.leaf_index,
+                        recipient_address: claim_data.recipient_address,
+                        amount: claim_data.amount,
+                        salt: claim_data.salt,
+                    }
+                }
+                "close" => airdrop_sdk::instructions::Instruction::Close,
+                _ => anyhow::bail!("Unknown instruction: {instruction}. Use: init, claim, close"),
+            };
+            let serialized = airdrop_sdk::instructions::serialize_instruction(&instr)?;
+            let bytes: Vec<u8> = serialized.iter()
+                .flat_map(|w| w.to_le_bytes())
+                .collect();
+            println!("{}", hex::encode(&bytes));
         }
     }
 

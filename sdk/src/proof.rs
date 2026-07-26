@@ -1,5 +1,5 @@
 use sha2::{Sha256, Digest};
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use crate::types::MerkleProof;
 
 pub fn compute_nullifier(secret: &[u8; 32]) -> [u8; 32] {
@@ -12,7 +12,7 @@ pub fn compute_nullifier(secret: &[u8; 32]) -> [u8; 32] {
     nullifier
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ClaimData {
     pub nullifier_secret: [u8; 32],
     pub nullifier: [u8; 32],
