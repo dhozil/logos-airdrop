@@ -26,22 +26,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Risc0 toolchain
-        run: |
-          curl -fsSL https://risczero.com/install | bash
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-          echo "$HOME/.risc0/bin" >> $GITHUB_PATH
-          export PATH="$HOME/.cargo/bin:$HOME/.risc0/bin:$PATH"
-          rzup install cargo-risczero
-          rzup install rust
-          cargo risczero --version
-      - name: Build LEZ guest
+      - name: Build LEZ airdrop guest via Docker
         working-directory: programs/airdrop
-        run: cargo risczero build
-      - name: Upload program binary
+        run: |
+          cat > Dockerfile.build << 'DEOF'
+          FROM risczero/risc0-guest-builder:r0.1.88.0 AS build
+          WORKDIR /src
+          COPY . .
+          RUN cargo +risc0 fetch --locked --target riscv32im-risc0-zkvm-elf
+          RUN cargo +risc0 build --release --locked --target riscv32im-risc0-zkvm-elf
+
+          FROM scratch AS export
+          COPY --from=build /src/target/riscv32im-risc0-zkvm-elf/release/airdrop-program /airdrop-program.elf
+          DEOF
+          docker build -f Dockerfile.build -t airdrop-builder .
+      - name: Export binary from Docker
+        working-directory: programs/airdrop
+        run: |
+          docker create --name airdrop-export airdrop-builder
+          mkdir -p target/risc0-guest
+          docker cp airdrop-export:/airdrop-program.elf target/risc0-guest/airdrop-program.elf
+          docker rm airdrop-export
+      - name: Upload program ELF
         uses: actions/upload-artifact@v4
         with:
           name: airdrop-program
-          path: |
-            programs/airdrop/target/risc0-guest/*.bin
-            programs/airdrop/target/riscv32im-risc0-zkvm-elf/docker/*.bin
+          path: programs/airdrop/target/risc0-guest/airdrop-program.elf
