@@ -18,7 +18,7 @@ pub type ProgramId = [u32; 8];
 pub type InstructionData = Vec<u32>;
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct AccountId(pub [u8; 32]);
+pub struct AccountId(pub String);
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Nonce(pub u128);
