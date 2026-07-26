@@ -26,14 +26,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Risc0
+      - name: Install Risc0 toolchain
         run: |
           curl -fsSL https://risczero.com/install | bash
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
           echo "$HOME/.risc0/bin" >> $GITHUB_PATH
-      - name: Install cargo-risczero
-        run: |
+          export PATH="$HOME/.cargo/bin:$HOME/.risc0/bin:$PATH"
           rzup install cargo-risczero
+          rzup install rust
           cargo risczero --version
       - name: Build LEZ guest
         working-directory: programs/airdrop
