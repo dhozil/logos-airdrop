@@ -7,6 +7,7 @@ risc0_zkvm::guest::entry!(main);
 
 use alloc::vec::Vec;
 use alloc::vec;
+use alloc::string::String;
 use core::convert::TryInto;
 use risc0_zkvm::guest::env;
 use serde::{Serialize, Deserialize};
