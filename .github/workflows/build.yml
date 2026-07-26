@@ -18,30 +18,35 @@ jobs:
         with:
           toolchain: stable
       - name: Run SDK tests
-        run: |
-          cargo test --manifest-path sdk/Cargo.toml --release
+        run: cargo test --manifest-path sdk/Cargo.toml --release
       - name: Build CLI
-        run: |
-          cargo build --manifest-path sdk/Cargo.toml --release --bin airdrop-cli
+        run: cargo build --manifest-path sdk/Cargo.toml --release --bin airdrop-cli
 
   build-program:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Risc0 toolchain
+      - name: Install Risc0
         run: |
-          curl -L https://risczero.com/install | bash
-          source "$HOME/.bashrc"
+          curl -fsSL https://risczero.com/install | bash
           export PATH="$HOME/.cargo/bin:$HOME/.risc0/bin:$PATH"
-          rzup install
-          cargo risczero --version
-      - name: Build LEZ program
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          echo "$HOME/.risc0/bin" >> $GITHUB_PATH
+      - name: Install cargo-risczero
         run: |
           export PATH="$HOME/.cargo/bin:$HOME/.risc0/bin:$PATH"
-          cd programs/airdrop
-          cargo risczero build
+          rzup install cargo-risczero 2>&1 || true
+          which cargo-risczero || echo "cargo-risczero not in PATH"
+          cargo risczero --version || echo "cargo risczero not available yet"
+      - name: Build LEZ guest
+        working-directory: programs/airdrop
+        run: |
+          export PATH="$HOME/.cargo/bin:$HOME/.risc0/bin:$HOME/.local/share/risc0/bin:$PATH"
+          cargo risczero build --release
       - name: Upload program binary
         uses: actions/upload-artifact@v4
         with:
           name: airdrop-program
-          path: programs/airdrop/target/risc0-guest/*.bin
+          path: |
+            programs/airdrop/target/risc0-guest/*.bin
+            programs/airdrop/target/riscv32im-risc0-zkvm-elf/docker/*.bin
