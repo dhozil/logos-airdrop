@@ -29,20 +29,15 @@ jobs:
       - name: Install Risc0
         run: |
           curl -fsSL https://risczero.com/install | bash
-          export PATH="$HOME/.cargo/bin:$HOME/.risc0/bin:$PATH"
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
           echo "$HOME/.risc0/bin" >> $GITHUB_PATH
       - name: Install cargo-risczero
         run: |
-          export PATH="$HOME/.cargo/bin:$HOME/.risc0/bin:$PATH"
-          rzup install cargo-risczero 2>&1 || true
-          which cargo-risczero || echo "cargo-risczero not in PATH"
-          cargo risczero --version || echo "cargo risczero not available yet"
+          rzup install cargo-risczero
+          cargo risczero --version
       - name: Build LEZ guest
         working-directory: programs/airdrop
-        run: |
-          export PATH="$HOME/.cargo/bin:$HOME/.risc0/bin:$HOME/.local/share/risc0/bin:$PATH"
-          cargo risczero build --release
+        run: cargo risczero build
       - name: Upload program binary
         uses: actions/upload-artifact@v4
         with:
