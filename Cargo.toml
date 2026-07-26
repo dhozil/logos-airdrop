@@ -1,0 +1,7 @@
+[workspace]
+resolver = "2"
+members = [
+    "sdk",
+    "programs/airdrop",
+    "circuits/methods/guest",
+]

@@ -1,0 +1,17 @@
+{
+  "name": "lp0003-airdrop",
+  "displayName": "Private Airdrop (LP-0003)",
+  "version": "0.1.0",
+  "description": "Claim tokens from private airdrop distributions. No one can see what you claimed.",
+  "author": "logos-builder",
+  "license": "MIT",
+  "categories": ["Finance", "Tools"],
+  "main": "qml/Main.qml",
+  "icon": "icon.png",
+  "permissions": [
+    "wallet:read",
+    "wallet:send",
+    "storage:read",
+    "messaging:send"
+  ]
+}
