@@ -355,5 +355,5 @@ fn main() {
         block_validity_window: ValidityWindow { from: None, to: None },
         timestamp_validity_window: ValidityWindow { from: None, to: None },
     };
-    env::write(&output);
+    env::commit(&output);
 }
