@@ -7,3 +7,7 @@ target/
 node_modules/
 __pycache__/
 *.pyc
+
+*.json
+recipients.csv
+
