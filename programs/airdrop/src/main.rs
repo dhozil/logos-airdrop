@@ -238,11 +238,9 @@ fn main() {
 
     let post_states = match instruction {
         Instruction::Initialize { merkle_root, distributor, total_allocation } => {
-            let mut account = pre_states
-                .into_iter()
-                .next()
-                .expect("Initialize requires 1 pre-state account")
-                .account;
+            let mut accounts = pre_states.into_iter();
+            let _admin = accounts.next().expect("Initialize requires 2 pre-state accounts: [admin, state]");
+            let mut state_account = accounts.next().expect("Initialize requires 2 pre-state accounts: [admin, state]");
 
             let state = DistributionState {
                 merkle_root,
@@ -253,12 +251,18 @@ fn main() {
                 nullifiers: Vec::new(),
             };
             let encoded = encode_state(&state);
-            account.data = AccountData(encoded);
+            state_account.account.data = AccountData(encoded);
 
-            vec![AccountPostState {
-                account,
-                claim: Some(Claim::Authorized),
-            }]
+            vec![
+                AccountPostState {
+                    account: _admin.account,
+                    claim: None,
+                },
+                AccountPostState {
+                    account: state_account.account,
+                    claim: Some(Claim::Authorized),
+                },
+            ]
         }
 
         Instruction::Claim {
@@ -269,13 +273,11 @@ fn main() {
             amount,
             salt,
         } => {
-            let mut account = pre_states
-                .into_iter()
-                .next()
-                .expect("Claim requires 1 pre-state account")
-                .account;
+            let mut accounts = pre_states.into_iter();
+            let _admin = accounts.next().expect("Claim requires 2 pre-state accounts: [admin, state]");
+            let mut state_acc = accounts.next().expect("Claim requires 2 pre-state accounts: [admin, state]");
 
-            let state = decode_state(&account.data.0);
+            let state = decode_state(&state_acc.account.data.0);
 
             assert!(state.active, "Distribution is not active");
             assert!(
@@ -302,34 +304,44 @@ fn main() {
             updated.nullifiers.push(nullifier);
 
             let encoded = encode_state(&updated);
-            account.data = AccountData(encoded);
+            state_acc.account.data = AccountData(encoded);
 
-            vec![AccountPostState {
-                account,
-                claim: None,
-            }]
+            vec![
+                AccountPostState {
+                    account: _admin.account,
+                    claim: None,
+                },
+                AccountPostState {
+                    account: state_acc.account,
+                    claim: None,
+                },
+            ]
         }
 
         Instruction::Close => {
-            let mut account = pre_states
-                .into_iter()
-                .next()
-                .expect("Close requires 1 pre-state account")
-                .account;
+            let mut accounts = pre_states.into_iter();
+            let _admin = accounts.next().expect("Close requires 2 pre-state accounts: [admin, state]");
+            let mut state_acc = accounts.next().expect("Close requires 2 pre-state accounts: [admin, state]");
 
-            let state = decode_state(&account.data.0);
+            let state = decode_state(&state_acc.account.data.0);
 
             let updated = DistributionState {
                 active: false,
                 ..state
             };
             let encoded = encode_state(&updated);
-            account.data = AccountData(encoded);
+            state_acc.account.data = AccountData(encoded);
 
-            vec![AccountPostState {
-                account,
-                claim: None,
-            }]
+            vec![
+                AccountPostState {
+                    account: _admin.account,
+                    claim: None,
+                },
+                AccountPostState {
+                    account: state_acc.account,
+                    claim: None,
+                },
+            ]
         }
     };
 
