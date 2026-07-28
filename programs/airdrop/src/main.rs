@@ -13,6 +13,9 @@ use risc0_zkvm::guest::env;
 use serde::{Serialize, Deserialize};
 use sha2::{Sha256, Digest};
 
+// Bump this to force a new ELF hash for redeployment
+const _DEPLOY_BACKOFF: u64 = 1;
+
 // ── LEZ protocol types (must match lee_core field order) ──────────────
 
 pub type ProgramId = [u32; 8];
@@ -139,13 +142,13 @@ fn encode_state(state: &DistributionState) -> Vec<u8> {
 
 fn decode_state(data: &[u8]) -> DistributionState {
     let mut offset = 0;
-    let mut read_32 = |off: &mut usize| -> [u8; 32] {
+    let read_32 = |off: &mut usize| -> [u8; 32] {
         let mut arr = [0u8; 32];
         arr.copy_from_slice(&data[*off..*off + 32]);
         *off += 32;
         arr
     };
-    let mut read_u64 = |off: &mut usize| -> u64 {
+    let read_u64 = |off: &mut usize| -> u64 {
         let bytes: [u8; 8] = data[*off..*off + 8].try_into().unwrap();
         *off += 8;
         u64::from_le_bytes(bytes)
