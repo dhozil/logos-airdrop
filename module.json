@@ -1,0 +1,11 @@
+{
+  "name": "lp0003-airdrop",
+  "displayName": "Private Airdrop (LP-0003)",
+  "version": "0.1.0",
+  "description": "Logos Basecamp app for claiming from private airdrop distributions. See basecamp/ for the QML app and basecamp/manifest.json.",
+  "author": "DhoziL",
+  "license": "MIT",
+  "entry": "basecamp/manifest.json",
+  "source": "basecamp",
+  "program_id_hex": "26d7fafc8e6d6ce035979a9b5c692e5367e3e2ec6123116b1f75edef13bd8721"
+}
