@@ -1,24 +1,27 @@
 # Compute Unit Costs
 
-Measured on LEZ testnet (testnet v0.2).
+Measured on LEZ testnet v0.2 (public execution, Risc0 guest `airdrop-v2-ci.bin`).
+
+Compute Units (CU) are the Risc0 execution cycle count measured by `default_executor` (the same path the sequencer uses to validate public transactions).
 
 ## Operations
 
-| Operation | CU Cost | Notes |
-|-----------|---------|-------|
-| Initialize Distribution | ~15,000 | Creates PDA, stores 32-byte root + params |
-| Claim (private exec, RISC0_DEV_MODE=0) | ~50,000 | Proof verification + state update |
-| Claim (private exec, RISC0_DEV_MODE=1) | ~5,000 | Dev mode (skip real proof) |
-| Close Distribution | ~3,000 | Marks distribution inactive |
-| Merkle Proof Verification (in-circuit) | ~10,000 | Path verification (20-depth tree) |
+| Operation | CU (cycles) | Notes |
+|-----------|-------------|-------|
+| Initialize Distribution | 82,576 | Stores 32-byte merkle root + distributor + allocation |
+| Claim | 751,132 | Verifies 20-level merkle proof + nullifier + allocation update |
+| Close Distribution | ~10,000 | Marks distribution inactive |
+
+## Merkle Proof Verification (in-circuit)
+
+A 20-depth merkle path verification dominates the claim cost. Each `hash_pair` (two SHA-256 of 32-byte inputs) costs ~35,000-37,000 cycles; the claim performs 20 of them (~750K cycles total).
 
 ## Performance Benchmarks
 
 | Component | Time | Notes |
 |-----------|------|-------|
-| Merkle tree generation (1000 leaves, depth 20) | ~50ms | SDK, single-threaded |
-| Proof generation (RISC0_DEV_MODE=1) | ~2s | Dev mode, no real ZKP |
-| Proof generation (RISC0_DEV_MODE=0) | ~55s | Real Risc0 STARK proof |
-| Proof verification (on-chain) | ~5s | Via Risc0 verifier |
+| Merkle tree generation (22 leaves, depth 20) | <10ms | SDK, single-threaded |
+| Claim proof generation (private exec) | ~60s | Real Risc0 STARK proof (est.) |
+| Claim public execution (on-chain) | ~2-3s | Sequencer re-executes the guest |
 
-**Note**: LEZ testnet v0.2 compute budget may change. These measurements are from `testnet.lez.logos.co`.
+**Note**: LEZ testnet v0.2 compute budget may change. Measurements from `testnet.lez.logos.co`, guest commit `d9768e8`.
