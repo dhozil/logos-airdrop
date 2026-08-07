@@ -23,7 +23,7 @@ Full details in [`docs/deployments.md`](deployments.md).
 
 - **Repo:** `dhozil/logos-airdrop`
 - **Branch:** `master`
-- **Video Demo:** *(update link to current deployment demo)*
+- **Video Demo:** [download MP4](https://github.com/dhozil/logos-airdrop/releases/download/demo-v1/demo.video.mp4)
 
 ## Approach
 

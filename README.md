@@ -136,7 +136,8 @@ cd sdk && cargo test --release
 
 ## Demo
 
-See [docs/deployments.md](docs/deployments.md) for live deployments on LEZ testnet.
+- **Video:** [LP-0003 demo (MP4)](https://github.com/dhozil/logos-airdrop/releases/download/demo-v1/demo.video.mp4)
+- See [docs/deployments.md](docs/deployments.md) for live deployments on LEZ testnet.
 
 ## License
 
