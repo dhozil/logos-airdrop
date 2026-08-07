@@ -1,0 +1,75 @@
+{
+  "version": "0.1.0",
+  "name": "airdrop",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        { "name": "admin", "writable": false, "signer": true, "visibility": ["public"] },
+        { "name": "state", "writable": true, "signer": false, "init": true, "visibility": ["public"] }
+      ],
+      "args": [
+        { "name": "merkle_root", "type": { "array": ["u8", 32] } },
+        { "name": "distributor", "type": { "array": ["u8", 32] } },
+        { "name": "total_allocation", "type": "u64" }
+      ],
+      "discriminator": "afaf6d1f0d989bed",
+      "execution": { "public": true, "private_owned": false },
+      "variant": "Initialize"
+    },
+    {
+      "name": "claim",
+      "accounts": [
+        { "name": "admin", "writable": false, "signer": true, "visibility": ["public"] },
+        { "name": "state", "writable": true, "signer": false, "visibility": ["public"] }
+      ],
+      "args": [
+        { "name": "nullifier_secret", "type": { "array": ["u8", 32] } },
+        { "name": "merkle_path", "type": { "vec": { "array": ["u8", 32] } } },
+        { "name": "leaf_index", "type": "u64" },
+        { "name": "recipient_address", "type": { "array": ["u8", 32] } },
+        { "name": "amount", "type": "u64" },
+        { "name": "salt", "type": { "array": ["u8", 32] } }
+      ],
+      "discriminator": "3ec6d6c1d59f6cd2",
+      "execution": { "public": true, "private_owned": false },
+      "variant": "Claim"
+    },
+    {
+      "name": "close",
+      "accounts": [
+        { "name": "admin", "writable": false, "signer": true, "visibility": ["public"] },
+        { "name": "state", "writable": true, "signer": false, "visibility": ["public"] }
+      ],
+      "args": [],
+      "discriminator": "62a5c9b16c41ce60",
+      "execution": { "public": true, "private_owned": false },
+      "variant": "Close"
+    }
+  ],
+  "accounts": [
+    {
+      "name": "DistributionState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "merkle_root", "type": { "array": ["u8", 32] } },
+          { "name": "distributor", "type": { "array": ["u8", 32] } },
+          { "name": "total_allocation", "type": "u64" },
+          { "name": "claimed_so_far", "type": "u64" },
+          { "name": "active", "type": "bool" },
+          { "name": "nullifiers", "type": { "vec": { "array": ["u8", 32] } } }
+        ]
+      }
+    }
+  ],
+  "types": [],
+  "errors": [
+    { "code": 1, "name": "InvalidMerkleProof", "msg": "Merkle inclusion proof failed" },
+    { "code": 2, "name": "NullifierAlreadyClaimed", "msg": "Nullifier already claimed" },
+    { "code": 3, "name": "InsufficientAllocation", "msg": "Insufficient remaining allocation" },
+    { "code": 4, "name": "DistributionInactive", "msg": "Distribution is not active" }
+  ],
+  "spec": "lssa-lang",
+  "metadata": { "name": "airdrop", "version": "0.1.0" }
+}

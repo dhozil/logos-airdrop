@@ -23,6 +23,8 @@ Full details in [`docs/deployments.md`](deployments.md).
 
 - **Repo:** `dhozil/logos-airdrop`
 - **Branch:** `master`
+- **License:** MIT (`LICENSE-MIT`) / Apache-2.0 (`LICENSE-APACHE`)
+- **SPEL IDL:** [`airdrop.idl.json`](../airdrop.idl.json)
 - **Video Demo:** [Google Drive preview](https://drive.google.com/file/d/1BNkKe2BEY6b1dEZeVZOIanqiSzvJrnXl/view) · [MP4 download](https://github.com/dhozil/logos-airdrop/releases/download/demo-v1/demo.video.mp4)
 
 ## Approach

@@ -9,6 +9,7 @@ __pycache__/
 *.pyc
 
 *.json
+!airdrop.idl.json
 recipients.csv
 
 # personal demo materials (not for submission)
