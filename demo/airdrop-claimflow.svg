@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="400" viewBox="0 0 960 400">
+  <rect width="960" height="400" fill="#0d1117"/>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#f0883e"/>
+    </marker>
+  </defs>
+  <style>
+    .t { font: bold 20px Arial; fill: #f0883e; }
+    .b { font: 14px Arial; fill: #e6edf3; }
+    .s { font: 11px Arial; fill: #8b949e; }
+    .box { fill: #1c2128; stroke: #f0883e; stroke-width: 2; rx: 8; }
+    .num { font: bold 16px Arial; fill: #f0883e; }
+  </style>
+
+  <text x="480" y="40" text-anchor="middle" class="t">Claim Flow: Verified Inside the Risc0 zkVM</text>
+
+  <!-- Step 1 -->
+  <rect x="30" y="90" width="180" height="110" class="box"/>
+  <text x="55" y="120" class="num">1</text>
+  <text x="120" y="135" text-anchor="middle" class="b">Compute leaf</text>
+  <text x="120" y="155" text-anchor="middle" class="s">SHA256("airdrop_leaf"</text>
+  <text x="120" y="170" text-anchor="middle" class="s">|| addr || amount || salt)</text>
+  <text x="120" y="188" text-anchor="middle" class="s">salt = secret random</text>
+
+  <!-- Step 2 -->
+  <rect x="270" y="90" width="180" height="110" class="box"/>
+  <text x="295" y="120" class="num">2</text>
+  <text x="360" y="135" text-anchor="middle" class="b">Verify Merkle path</text>
+  <text x="360" y="155" text-anchor="middle" class="s">20-depth proof</text>
+  <text x="360" y="170" text-anchor="middle" class="s">leaf + path == on-chain root</text>
+  <text x="360" y="188" text-anchor="middle" class="s">only eligible can pass</text>
+
+  <!-- Step 3 -->
+  <rect x="510" y="90" width="180" height="110" class="box"/>
+  <text x="535" y="120" class="num">3</text>
+  <text x="600" y="135" text-anchor="middle" class="b">Nullifier</text>
+  <text x="600" y="155" text-anchor="middle" class="s">SHA256("airdrop_nullifier"</text>
+  <text x="600" y="170" text-anchor="middle" class="s">|| secret)</text>
+  <text x="600" y="188" text-anchor="middle" class="s">must be unused</text>
+
+  <!-- Step 4 -->
+  <rect x="750" y="90" width="180" height="110" class="box"/>
+  <text x="775" y="120" class="num">4</text>
+  <text x="840" y="135" text-anchor="middle" class="b">Update state</text>
+  <text x="840" y="155" text-anchor="middle" class="s">claimed_so_far += amount</text>
+  <text x="840" y="170" text-anchor="middle" class="s">push nullifier</text>
+  <text x="840" y="188" text-anchor="middle" class="s">allocation cap enforced</text>
+
+  <line x1="210" y1="145" x2="268" y2="145" stroke="#f0883e" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="450" y1="145" x2="508" y2="145" stroke="#f0883e" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="690" y1="145" x2="748" y2="145" stroke="#f0883e" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- Security footer -->
+  <rect x="30" y="270" width="900" height="90" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="480" y="300" text-anchor="middle" class="b">Security Properties</text>
+  <text x="480" y="322" text-anchor="middle" class="s">• Only Merkle-committed recipients can claim (salt is secret)</text>
+  <text x="480" y="340" text-anchor="middle" class="s">• Nullifier prevents double-claim · allocation capped · state owned by program</text>
+</svg>

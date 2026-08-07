@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+  <rect width="960" height="540" fill="#0d1117"/>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#58a6ff"/>
+    </marker>
+  </defs>
+  <style>
+    .title { font: bold 22px Arial; fill: #58a6ff; }
+    .subtitle { font: 14px Arial; fill: #8b949e; }
+    .box { fill: #161b22; stroke: #30363d; stroke-width: 1.5; rx: 8; }
+    .box-accent { fill: #1f6feb22; stroke: #58a6ff; stroke-width: 2; rx: 8; }
+    .label { font: 14px Arial; fill: #e6edf3; }
+    .label-sm { font: 11px Arial; fill: #8b949e; }
+    .badge { font: bold 11px Arial; fill: #3fb950; }
+  </style>
+
+  <!-- Title -->
+  <text x="480" y="40" text-anchor="middle" class="title">LP-0003: Private Allowlist / Airdrop Distributor</text>
+  <text x="480" y="65" text-anchor="middle" class="subtitle">LEZ Testnet · Program 26d7fafc… · 2 distributions · 43 claims</text>
+
+  <!-- Left: Distributor -->
+  <rect x="40" y="120" width="180" height="90" class="box-accent"/>
+  <text x="130" y="155" text-anchor="middle" class="label">Distributor</text>
+  <text x="130" y="175" text-anchor="middle" class="label-sm">Admin: AKy1PsJF…</text>
+  <text x="130" y="192" text-anchor="middle" class="label-sm">(private list: addr + amount)</text>
+
+  <!-- Merkle tree -->
+  <rect x="280" y="120" width="200" height="90" class="box"/>
+  <text x="380" y="155" text-anchor="middle" class="label">Merkle Tree</text>
+  <text x="380" y="175" text-anchor="middle" class="label-sm">leaf = SHA256("airdrop_leaf"</text>
+  <text x="380" y="192" text-anchor="middle" class="label-sm">      || addr || amount || salt)</text>
+
+  <!-- On-chain program -->
+  <rect x="540" y="120" width="200" height="90" class="box-accent"/>
+  <text x="640" y="155" text-anchor="middle" class="label">Airdrop Program</text>
+  <text x="640" y="175" text-anchor="middle" class="label-sm">initialize() · claim() · close()</text>
+  <text x="640" y="192" text-anchor="middle" class="label-sm">Risc0 zkVM guest</text>
+
+  <!-- Arrows: Distributor -> Merkle -> On-chain -->
+  <line x1="220" y1="165" x2="278" y2="165" stroke="#58a6ff" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="480" y1="165" x2="538" y2="165" stroke="#58a6ff" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="240" y="150" class="label-sm">recipients</text>
+  <text x="500" y="150" class="label-sm">merkle_root</text>
+
+  <!-- Bottom: Recipient -->
+  <rect x="40" y="380" width="180" height="90" class="box-accent"/>
+  <text x="130" y="415" text-anchor="middle" class="label">Recipient</text>
+  <text x="130" y="435" text-anchor="middle" class="label-sm">claim data:</text>
+  <text x="130" y="452" text-anchor="middle" class="label-sm">secret, path, amount, salt</text>
+
+  <!-- State account -->
+  <rect x="540" y="380" width="200" height="90" class="box"/>
+  <text x="640" y="415" text-anchor="middle" class="label">State Account</text>
+  <text x="640" y="435" text-anchor="middle" class="label-sm">merkle_root · claimed_so_far</text>
+  <text x="640" y="452" text-anchor="middle" class="label-sm">active · nullifiers[]</text>
+
+  <!-- Arrow: Recipient -> State (via program) -->
+  <path d="M 220 425 L 380 425 L 380 310 L 500 310 L 500 340" fill="none" stroke="#58a6ff" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="300" y="345" class="label-sm" text-anchor="middle">claim(): verify merkle + nullifier</text>
+
+  <!-- Badges on state -->
+  <text x="640" y="475" text-anchor="middle" class="badge">Dist A: 22 claims · Dist B: 21 claims</text>
+
+  <!-- Bottom note -->
+  <rect x="280" y="380" width="200" height="90" class="box"/>
+  <text x="380" y="415" text-anchor="middle" class="label">Nullifier</text>
+  <text x="380" y="435" text-anchor="middle" class="label-sm">SHA256("airdrop_nullifier"</text>
+  <text x="380" y="452" text-anchor="middle" class="label-sm">      || secret) → unique</text>
+  <text x="380" y="472" text-anchor="middle" class="label-sm">prevents double-claim</text>
+
+  <line x1="240" y1="425" x2="278" y2="425" stroke="#58a6ff" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="480" y1="425" x2="538" y2="425" stroke="#58a6ff" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>
