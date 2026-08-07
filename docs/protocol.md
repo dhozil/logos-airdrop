@@ -11,34 +11,43 @@ This protocol enables private token airdrops on the Logos Execution Zone (LEZ). 
 1. **Prepare recipient list**: Distributor compiles list of `(recipient_address, amount)` pairs
 2. **Generate secrets**: For each recipient, generate a random 32-byte salt and nullifier secret
 3. **Build Merkle tree**: Each leaf = `SHA256("airdrop_leaf" || recipient_address || amount || salt)`
-4. **Initialize on-chain**: Distributor calls `initialize(merkle_root, token_program_id, total_allocation)` on the airdrop program, which:
-   - Creates a distribution state account (PDA)
-   - Stores the Merkle root and distribution parameters
-   - Transfers tokens from distributor to the program escrow
+4. **Initialize on-chain**: Distributor calls `initialize(merkle_root, distributor, total_allocation)` on the airdrop program, which:
+   - Claims a state account (owned by the airdrop program)
+   - Stores the Merkle root, distributor, allocation, and empty nullifier set
 
-### Phase 2: Claim (Private Execution)
+### Phase 2: Claim (Public Execution)
 
-1. **Prepare claim data**: Recipient generates claim input:
-   - `nullifier_secret`: The secret assigned to them
-   - `merkle_path`: Sibling hashes for Merkle inclusion proof
-   - `leaf_index`: Position of their leaf in the tree
-   - `recipient_address`: Their LEZ address
+1. **Prepare claim data**: Recipient (or distributor) assembles claim input:
+   - `nullifier_secret`: The secret assigned to the recipient
+   - `merkle_path`: Sibling hashes for the Merkle inclusion proof
+   - `leaf_index`: Position of the recipient's leaf in the tree
+   - `recipient_address`: The recipient's LEZ address
    - `amount`: Their allocation amount
    - `salt`: Their unique salt
 
-2. **Generate proof**: Recipient runs the airdrop program locally (private execution), producing a Risc0 ZK proof that:
-   - Computes the leaf hash from their private inputs
-   - Verifies Merkle inclusion (leaf + path → root matches on-chain root)
-   - Computes nullifier = `SHA256("airdrop_nullifier" || nullifier_secret)`
-   - Commits to (nullifier, recipient_address, amount) as public outputs
+2. **Submit claim**: A public LEZ transaction executes the airdrop program on-chain (Risc0 zkVM re-execution by the sequencer). The guest:
+   - Computes `leaf = SHA256("airdrop_leaf" || recipient_address || amount || salt)`
+   - Verifies Merkle inclusion: `verify_path(leaf, merkle_path, leaf_index) == stored_root`
+   - Computes `nullifier = SHA256("airdrop_nullifier" || nullifier_secret)`
+   - Asserts the nullifier is unused and `claimed_so_far + amount <= total_allocation`
+   - Updates the distribution state (adds nullifier, increments `claimed_so_far`)
 
-3. **Submit claim**: Recipient submits the Risc0 proof to the LEZ sequencer, which:
-   - Verifies the ZK proof
-   - Checks the nullifier hasn't been used (double-claim prevention)
-   - Transfers tokens from the distribution escrow to the recipient
-   - Updates the claimed amount in distribution state
+## On-Chain State
 
-### Privacy Model
+The distribution state is stored in a program-owned account:
+
+```
+merkle_root:      [u8; 32]
+distributor:      [u8; 32]
+total_allocation: u64
+claimed_so_far:   u64
+active:           bool
+nullifiers:       Vec<[u8; 32]>
+```
+
+Only the airdrop program (owner) can modify this account.
+
+## Privacy Model
 
 | Participant | Knows |
 |------------|-------|
@@ -57,37 +66,41 @@ This protocol enables private token airdrops on the Logos Execution Zone (LEZ). 
 The eligibility verification runs inside the LEZ program (Risc0 guest):
 
 ```
-Public inputs:  (none - all inputs are private to the user's execution)
-Private inputs: nullifier_secret, merkle_path, leaf_index, recipient_address, amount, salt
+Public inputs:  self_program_id, caller_program_id, pre_states, instruction_words
 Computed:       leaf = SHA256("airdrop_leaf" || recipient_address || amount || salt)
                 root = verify_path(leaf, merkle_path, leaf_index)
                 nullifier = SHA256("airdrop_nullifier" || nullifier_secret)
-Constraints:    root == stored_merkle_root (checked on-chain from state)
-Post-state:     claimed_so_far += amount
+Constraints:    root == stored_merkle_root (from state account)
+                nullifier not in stored nullifier set
+                claimed_so_far + amount <= total_allocation
+                active == true
+Post-state:     claimed_so_far += amount; nullifiers.push(nullifier)
 ```
-
-### Nullifier Scheme
-
-- Each recipient has a unique `nullifier_secret` (32 bytes random)
-- Nullifier = `SHA256("airdrop_nullifier" || nullifier_secret)`
-- On-chain nullifier set prevents double-claims
-- Nullifiers are public but unlinkable: an observer cannot determine which recipient a nullifier belongs to
 
 ## Security Considerations
 
+### Eligibility Enforcement
+Only a leaf committed in the Merkle root can produce a valid inclusion proof. Because the salt is a random secret known only to the distributor/recipient, an outsider cannot forge a leaf for an arbitrary address.
+
 ### Double-Claim Prevention
-The on-chain verifier maintains an implicit nullifier set via the `claimed_so_far` counter and the unique nullifier output. Each nullifier can only be claimed once (enforced by the ZK proof's unique nullifier output).
+Each `nullifier_secret` produces a unique nullifier stored in the state. A second claim with the same secret is rejected (`nullifier already claimed`).
+
+### Allocation Cap
+`claimed_so_far + amount <= total_allocation` prevents draining beyond the committed pool.
 
 ### Front-running Protection
-Since claims reveal only the nullifier (not the recipient address), an observer cannot front-run a specific claim. Only the holder of the nullifier secret can produce a valid proof.
+A claim reveals only a nullifier, not the recipient address. Only the holder of the nullifier secret can produce a valid claim.
 
-### Replay Attacks
-Each proof is bound to a specific distribution instance via the on-chain state account. A proof from one distribution cannot be reused on another.
+### Replay Across Distributions
+Each distribution has its own state account and nullifier set. A claim from one distribution cannot be replayed on another (fresh nullifier set).
+
+### Trust Anchor
+The distribution manifest (salts + nullifier secrets) must remain private. Anyone with the full manifest can claim all allocations.
 
 ## Integration Guide
 
 ### Prerequisites
-- LEZ wallet configured and funded
+- LEZ wallet CLI v0.2.2 configured for testnet
 - Airdrop program deployed on LEZ testnet
 - Recipient address list in CSV format
 
@@ -100,18 +113,20 @@ airdrop-cli generate \
   --distributor <DISTRIBUTOR_ADDRESS> \
   --allocation 100000
 
-# 2. Initialize on-chain
-wallet public-tx --program <AIRDROP_PROGRAM> \
-  --instruction initialize \
-  --args <merkle_root> <token_id> <total_allocation>
+# 2. Initialize the admin (distributor) account
+wallet auth-transfer init --account-id Public/<ADMIN>
 
-# 3. Recipient: prepare claim data
-airdrop-cli proof \
-  --manifest distribution.json \
-  --address <RECIPIENT_ADDRESS>
+# 3. Serialize & submit init (admin + state sign)
+airdrop-cli serialize --instruction init \
+  --merkle-root <MERKLE_ROOT> \
+  --distributor <DISTRIBUTOR_ADDRESS> \
+  --allocation 100000
+wallet call --program <PROGRAM_ID> --data <INIT_HEX> \
+  --accounts "Public/<ADMIN>" "Public/<STATE_ACCOUNT>"
 
-# 4. Recipient: submit claim (private execution)
-wallet private-tx --program <AIRDROP_PROGRAM> \
-  --instruction claim \
-  --args <nullifier_secret> <merkle_path> <leaf_index> <address> <amount> <salt>
+# 4. Prepare & submit claims
+airdrop-cli proof --manifest distribution.json --address <RECIPIENT_ADDRESS> > claim.json
+airdrop-cli serialize --instruction claim --claim claim.json
+wallet call --program <PROGRAM_ID> --data <CLAIM_HEX> \
+  --accounts "Public/<ADMIN>" "Public/<STATE_ACCOUNT>"
 ```
