@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
 # LP-0003 Demo: On-Chain Verification (non-destructive)
-# Menampilkan bukti deployment live tanpa mengubah state
+# Shows proof of the live deployment without changing state
 # ============================================================
 set -euo pipefail
 
@@ -18,19 +18,19 @@ echo "Program ID: $PID"
 echo "============================================================"
 
 echo ""
-echo "=== 1. Check wallet health ==="
+echo "=== 1. Wallet health ==="
 $WALLET check-health
 
 echo ""
-echo "=== 2. Verify program deployment on-chain ==="
+echo "=== 2. Program deployment on-chain ==="
 $WALLET chain-info transaction --hash $DEPLOY_TX
 
 echo ""
-echo "=== 3. Verify Distribution A state ==="
+echo "=== 3. Distribution A state (merkle_root + claimed_so_far + nullifiers) ==="
 $WALLET account get --account-id $STATE_A
 
 echo ""
-echo "=== 4. Verify Distribution B state ==="
+echo "=== 4. Distribution B state ==="
 $WALLET account get --account-id $STATE_B
 
 echo ""
